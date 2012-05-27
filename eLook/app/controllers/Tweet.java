@@ -97,15 +97,16 @@ public class Tweet extends Controller {
     public static void refresh(Long id) {
     	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + session.getId());
     	if(map == null)
-    		freshmap(id);
+    		map = freshmap(id);
     	renderJSON(map.size());
     }
     
     public static void getfresh(Long id) {
     	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + session.getId());
     	if(map == null)
-    		freshmap(id);
+    		map = freshmap(id);
     	Cache.set("updateTime" + session.getId(), new GregorianCalendar(), "20mn");
+    	Cache.delete("freshmap" + session.getId());
     	renderJSON(map);
     }
     
