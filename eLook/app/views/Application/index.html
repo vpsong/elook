@@ -10,6 +10,20 @@
 
 
 <script type="text/javascript">
+function pull() {
+	$.getJSON("/application/show",
+			function(data) {
+			$("#container_index").html("");
+			$.each(data,function(idx,item){
+				var newtweet = "<div class='tweet_index'><a href='/" + eval('(' + item + ')').writer + 
+			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
+			        eval('(' + item + ')').content +  
+			        "<p class='pubtime'>" + eval('(' + item + ')').time + "</p></div>";
+			    	$("#container_index").prepend(newtweet);
+			});   
+	   });
+}
+
 $(pull());
 
 $(function () { 
@@ -38,18 +52,4 @@ $(function(){
 	
 	
 });
-
-function pull() {
-	$.getJSON("/application/show",
-			function(data) {
-			$("#container_index").html("");
-			$.each(data,function(idx,item){
-				var newtweet = "<div class='tweet_index'><a href='/" + eval('(' + item + ')').writer + 
-			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
-			        eval('(' + item + ')').content +  
-			        "<p class='pubtime'>" + eval('(' + item + ')').time + "</p></div>";
-			    	$("#container_index").prepend(newtweet);
-			});   
-	   });
-}
 </script>
