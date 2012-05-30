@@ -2,6 +2,7 @@ package controllers;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import models.User;
 import play.libs.Codec;
@@ -33,7 +34,7 @@ public class CUser extends Controller {
 		user.password = Codec.hexMD5(user.password);
 		user.save();
 		session.put("username", user.name);
-		Tweet.tweet(user.name, 1);
+		Tweet.tweet(user.name, 1, false);
 	}
 	
 	public static void follow(String name) {
@@ -42,6 +43,13 @@ public class CUser extends Controller {
 		User other = User.find("name", name).first();
 		me.follow(other);
 		renderText("OK");
+	}
+	
+	public static void showFollowers() {
+		String myname = session.get("username");
+		User me = User.find("name", myname).first();
+		List<User> followers = me.followers;
+		render(followers);
 	}
 	
 }

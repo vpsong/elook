@@ -29,25 +29,26 @@ public class Feed extends Model{
 	@ManyToOne
 	@JoinColumn(name="parent_id")
 	public Feed parent;
-	@OneToMany(mappedBy="parent")
-	@OrderBy(clause="datePublish DESC")
-	public List<Feed> children;
-	public int type;
+//	@OneToMany(mappedBy="parent")
+//	@OrderBy(clause="datePublish DESC")
+//	public List<Feed> children;
 	public Calendar datePublish;
 	public String content;
-	
-	public static int TYPE_COMMENT = 0;
-	public static int TYPE_NORMAL = 1;
+	public int forwardCount;
+	public int commentCount;
 	
 	@Override
 	public String toString() {
 		JsonObject obj = new JsonObject();
+		obj.addProperty("id", this.id);
 		obj.addProperty("content", this.content);
 		obj.addProperty("writer", this.writer.name);
+		obj.addProperty("forwardCount", this.forwardCount);
+		obj.addProperty("commentCount", this.commentCount);
 		String time = (datePublish.get(Calendar.MONTH) + 1) + "月" + 
 					datePublish.get(Calendar.DATE) + "日 " + 
-					datePublish .get(Calendar.HOUR_OF_DAY) + ":" +
-					datePublish .get(Calendar.MINUTE);
+					datePublish.get(Calendar.HOUR_OF_DAY) + ":" +
+					datePublish.get(Calendar.MINUTE);
 		obj.addProperty("time", time);
 		return obj.toString();
 	}

@@ -25,7 +25,7 @@ public class Tweet extends Controller {
 	public static final int PERPAGE = 15; 
 	
 	   
-    public static void tweet(String name, int page) { 
+    public static void tweet(String name, int page, Boolean history) {
     	int curpage = page;
     	if(curpage == 0)
     		curpage = 1;
@@ -39,7 +39,7 @@ public class Tweet extends Controller {
     			Cache.add("outbox" + user.id, new ArrayList<FeedIndex>(), "20mn");
     		}
     		long maxpage = me.followCount + 1;
-    		render(user, curpage, maxpage);
+    		render(user, curpage, maxpage, history);
     	}
     	else {
     		Boolean isFollowed = me.isFollowed(user);
@@ -49,15 +49,14 @@ public class Tweet extends Controller {
     	
     }
     
-    public static void pull(String name, int page) {
+    public static void pull(String name, int page, Boolean history) {
     	if(page == 0)
     		page = 1;
     	String myname = session.get("username");
     	User user = User.find("name", name).first();
     	TreeMap<Calendar, String> map = null;
-    	if(name.equals(myname)) {
-	    	map = pull4me(user, page);
-	    	renderJSON(map);
+    	if(name.equals(myname) && !history) {
+    			map = pull4me(user, page);    		
     	}
     	else {
     		map = new TreeMap<Calendar, String>(); 
@@ -65,8 +64,8 @@ public class Tweet extends Controller {
     		for(Feed feed : list) {
     			map.put(feed.datePublish, feed.toString());
     		}
-    		renderJSON(map);
     	}
+    	renderJSON(map);
     }
     
     public static TreeMap<Calendar, String> pull4me(User user, int page) {
@@ -95,6 +94,10 @@ public class Tweet extends Controller {
     }
     
     public static void refresh(Long id) {
+    	User user = User.findById(id);
+    	String myname = session.get("username");
+    	if(!myname.equals(user.name))
+    		renderJSON(0);
     	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + session.getId());
     	if(map == null)
     		map = freshmap(id);
@@ -115,6 +118,8 @@ public class Tweet extends Controller {
     	Calendar updateTime = (Calendar)Cache.get("updateTime" + session.getId());
     	User me = User.findById(id);
     	List<User> follows = me.follows;
+    	if(follows.size() == 0)
+    		return map;
     	for(User follow : follows) {
     		ArrayList<FeedIndex> tmp = (ArrayList<FeedIndex>)Cache.get("outbox" + follow.id);
     		if(tmp != null) {
@@ -133,7 +138,6 @@ public class Tweet extends Controller {
     	Feed feed = new Feed();
     	feed.content = content;
     	feed.datePublish = new GregorianCalendar();
-    	feed.type = Feed.TYPE_NORMAL;
     	String username = session.get("username");
     	User writer = User.find("name", username).first();
     	feed.writer = writer;
