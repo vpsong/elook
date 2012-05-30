@@ -1,0 +1,12 @@
+#{extends 'main.html' /}
+#{set title:'我的粉丝 eLook-e博' /}
+
+<a href="/${session.username}">我的首页</a>
+
+<div id="container">
+#{list items:followers, as:'follower'}
+<div class="follower">
+<a href="/${follower.name}">${follower.name}</a>
+</div>
+#{/list}
+</div>

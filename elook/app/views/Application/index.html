@@ -1,5 +1,5 @@
 #{extends 'main.html' /}
-#{set title:'Home' /}
+#{set title:'eLook首页' /}
 
 
 <h1>eLook垃圾版</h1>
@@ -18,25 +18,23 @@ function pull() {
 				var newtweet = "<div class='tweet_index'><a href='/" + eval('(' + item + ')').writer + 
 			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
 			        eval('(' + item + ')').content +  
-			        "<p class='pubtime'>" + eval('(' + item + ')').time + "</p></div>";
+			        "<p class='info'><span class='pubtime'>" + eval('(' + item + ')').time + 
+			        "</span><span class='action'>" + 
+			        "<a>转发(" + eval('(' + item + ')').forwardCount + ")</a> | <a>评论(" + 
+			        eval('(' + item + ')').commentCount + ")</a></span></p></div>";
 			    	$("#container_index").prepend(newtweet);
 			});   
 	   });
 }
 
-$(pull());
-
-$(function () { 
-	setInterval(pull, 180000); 
-}); 
-
 $(function(){
+	pull();
+	setInterval(pull, 180000);
+	
 	var scrtime;
  	$("#container_index").hover(function(){
 		clearInterval(scrtime);
-	
 	},function(){
-	
 	scrtime = setInterval(function(){
 		var $con = $("#container_index");
 		var tweetHeight = $con.find("div:last").height();
@@ -47,9 +45,7 @@ $(function(){
 		$con.find("div:first").fadeIn(300);
 		});	
 	},3000);
-	
-	}).trigger("mouseleave");
-	
-	
+	}).trigger("mouseleave");	
+ 	 
 });
 </script>

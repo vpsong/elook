@@ -1,23 +1,34 @@
 #{extends 'main.html' /}
 #{set title:'我的首页 eLook-e博' /}
 
+<div id="tipChat">
+</div>
+<div id="tipComment">
+</div>
 
-${user.name} ${user.followCount}关注${user.followerCount}粉丝${user.feedCount}微博 #{a @Secure.logout()}退出#{/a}
+${user.name} <a href="/${session.username}">我的首页</a> 
+${user.followCount}关注${user.followerCount}粉丝${user.feedCount}微博 #{a @Secure.logout()}退出#{/a}
 
 
 #{if isFollowed == null }
    <span id="isFollowed"></span>
+   #{a @CUser.showFollowers()}我的粉丝#{/a}|
+   <a href="/${session.username}?history=true">我的微博</a>|
+   #{a @CommentCtrl.commentList()}我的评论#{/a}|
+   #{a @ChatCtrl.chatList()}我的私信#{/a}
 #{/if}
 #{elseif isFollowed}
     <span id="isFollowed">已关注</span>
+    <span id="chat"><a href="javascript:void(0)" onclick="chat(${user.id});">私信</a></span>
 #{/elseif}
 #{else}
     <span id="isFollowed"><a href="javascript:void(0)" onclick="follow();">关注</a></span>
+    <a href="javascript:void(0)" onclick="chat(${user.id});">私信</a></span>
 #{/else}
 
 #{secure.check user.name}
 <div>
-<textarea id="content" rows="5" cols="50" maxlength="127">${content}</textarea>
+<textarea id="content" rows="5" cols="50" maxlength="127"  wrap="virtual">${content}</textarea>
 <input type="button" value="发表" onclick="publishing();"/>
 </div>
 #{/secure.check}
@@ -31,13 +42,13 @@ ${user.name} ${user.followCount}关注${user.followerCount}粉丝${user.feedCoun
 
 <p id="pager">
 #{if curpage > 1 }
-    #{a @tweet(user.name, curpage - 1) }上一页#{/a}
+    #{a @tweet(user.name, curpage - 1, history) }上一页#{/a}
 #{/if}
 
 第${curpage}页
 
 #{if curpage < maxpage }
-    #{a @tweet(user.name, curpage + 1) }下一页#{/a}
+    #{a @tweet(user.name, curpage + 1, history) }下一页#{/a}
 #{/if}
 </p>
 
@@ -46,34 +57,38 @@ ${user.name} ${user.followCount}关注${user.followerCount}粉丝${user.feedCoun
 function follow() {
 	$.get("@{CUser.follow(user.name)}", function(data){
 		  if(data == "OK") {
-			  alert("关注成功..");
+			  $.prompt("<span class='alertmsg'>关注成功..</span>");
 			  $("#isFollowed").html("已关注");
 		  }
 		  else {
-			  alert("系统繁忙..请稍后再试");
+			  $.prompt("<span class='alertmsg'>系统繁忙，请稍后再试</span>");
 		  }
 		});
 }
 
 function publishing() {
+	var con = $("#content").val();
+	con = con.replace("\n", "<br/>");
 	$.post("/tweet/publish",
-			{"content" : $("#content").val()},
+			{"content" : con},
 			   function(data){
 				if(data == "OK") {
-					alert("发表成功...");
+					$.prompt("<span class='alertmsg'>发表成功...</span>");
 					var now = new Date();
 					var time = (now.getMonth() + 1) + "月" +
 						now.getDate() + "日" + now.getHours() + ":" + 
 						now.getMinutes();
 					var newtweet = "<div class='tweet'><a href='/" + "${session.username}" +
 						"' target='_blank'>" + "${session.username}" + "</a>："
-						+ $("#content").val() +  
-						"<p class='pubtime'>" + time + "</p></div>";
+						+ con +	"<p class='info'><span class='pubtime'>" + time + 
+						"</span><span class='action'>" +
+						"<a>转发(0)</a> | <a>评论(0)</a>" +
+						"</span></p></div>";
 					$("#container").prepend(newtweet);
 					$("#content").val("");
 				}
 				else {
-					alert("系统繁忙..请稍后再试");
+					$.prompt("<span class='alertmsg'>系统繁忙，请稍后再试</span>");
 				}
 	});
 }
@@ -96,27 +111,109 @@ function getfresh(id) {
 			        var newtweet = "<div class='tweet'><a href='/" + eval('(' + item + ')').writer + 
 			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
 			        eval('(' + item + ')').content +
-			        "<p class='pubtime'>" + eval('(' + item + ')').time + "</p></div>";
+			        "<p class='info'><span class='pubtime'>" + eval('(' + item + ')').time + 
+			        "</span><span class='action'>" + 
+			        "<a>转发(" + eval('(' + item + ')').forwardCount + ")</a> | <a>评论(" + 
+			        eval('(' + item + ')').commentCount + ")</a></span></p></div>";
 			    	$("#container").prepend(newtweet);
 			    });   
 	   });
 	 $("#tip").html("");
 }
 
+function chat(id) {
+	var txt = '<div align="center">悄悄对 ${user.name} 说</div>'
+		+
+		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual"></textarea></div>';
+	$.prompt(txt, {
+		buttons : {
+			发送 : true,
+			取消 : false
+		},
+		submit : function(v, m, f) {
+			if(v) {
+				var text = f.content;
+				text = text.replace("\r\n", "<br/>");
+				$.get("@{ChatCtrl.chat()}", 
+					{"id" : "${user.id}", "content" : text},
+					function(data){
+					  if(data == "OK")
+						$.prompt("<span class='alertmsg'>发送成功</span>");
+					  else
+					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
+					});
+			}
+		}
+	});
+}
+
+function freshchat() {
+	$.get("@{ChatCtrl.getfresh()}", function(data){
+		  if(data == "0")
+			  $("#tipChat").html("");
+		  else
+		  	$("#tipChat").html("<a href='@{ChatCtrl.chatList()}'>有" + 
+				  data + "条新私信</a>");
+		});
+}
+
+function freshcomment() {
+	$.get("@{CommentCtrl.getfresh()}", function(data){
+		  if(data == "0")
+			  $("#tipComment").html("");
+		  else
+		  	$("#tipComment").html("<a href='@{CommentCtrl.commentList()}'>有" + 
+				  data + "条新评论</a>");
+		});
+}
+
+function comment(id) {
+	var txt = '<div align="center">评论</div>'
+		+
+		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual"></textarea></div>';
+	$.prompt(txt, {
+		buttons : {
+			发送 : true,
+			取消 : false
+		},
+		submit : function(v, m, f) {
+			if(v) {
+				var text = f.content;
+				text = text.replace("\r\n", "<br/>");
+				$.get("@{CommentCtrl.comment()}", 
+					{"id" : id, "content" : text},
+					function(data){
+					  if(data == "OK")
+						$.prompt("<span class='alertmsg'>评论成功</span>");
+					  else
+					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
+					});
+			}
+		}
+	});
+}
+
 $(function() {
 	$.getJSON("/tweet/pull",
-			{"name" : "${user.name}", "page" : "${curpage}" },
+			{"name" : "${user.name}", "page" : "${curpage}", "history" : ${history==null ? "false":history} },
 			function(data) {
 			$.each(data,function(idx,item){
 			        var newtweet = "<div class='tweet'><a href='/" + eval('(' + item + ')').writer + 
 			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
 			        eval('(' + item + ')').content +
-			        "<p class='pubtime'>" + eval('(' + item + ')').time + "</p></div>";
+			        "<p class='info'><span class='pubtime'>" + eval('(' + item + ')').time + 
+			        "</span><span class='action'>" + 
+			        "<a>转发(" + eval('(' + item + ')').forwardCount + 
+			        ")</a> | <a href='javascript:void(0)' onclick='comment(" + eval('(' + item + ')').id + 
+			        ")'>评论(" + eval('(' + item + ')').commentCount + ")</a></span></p></div>";
 			    	$("#container").prepend(newtweet);
 			    });   
 	   });
+	freshchat();
+	freshcomment();
+	
+	setInterval(refresh, 120000);
+	setInterval(freshchat, 40000);
+	setInterval(freshcomment, 40000);
 });
-$(function () { 
-	setInterval(refresh, 60000); 
-}); 
 </script>
