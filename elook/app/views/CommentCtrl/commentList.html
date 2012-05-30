@@ -1,0 +1,53 @@
+#{extends 'main.html' /}
+#{set title:'我的评论 eLook-e博' /}
+
+<a href="/${session.username}">我的首页</a>
+
+<div id="container">
+#{list items:comments, as:'comment'}
+<div class="comment">
+	${comment.from.name}：
+	<span>${comment.content.raw()}</span>
+	#{if comment.parentFeed != null}
+	<p class="origin">评论你的微博：${comment.parentFeed.content.raw()}</p>
+	#{/if}
+	#{if comment.parentComment != null}
+	<p class="origin">评论你的微博：${comment.parentComment.content.raw()}</p>
+	#{/if}
+	<p class="info">
+	<span class="pubtime">${comment.showDate()}</span>
+	<span class="action">
+	<a href="javascript:void(0)" onclick="reply(${comment.id}, '${comment.from.name}')">回复</a>
+	</span>
+	</p>
+</div>
+#{/list}
+</div>
+
+<script type="text/javascript">
+function reply(id, name) {
+	var txt = '<div align="center">回复 ' + name + '</div>'
+		+
+		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual"></textarea></div>';
+	$.prompt(txt, {
+		buttons : {
+			发送 : true,
+			取消 : false
+		},
+		submit : function(v, m, f) {
+			if(v) {
+				var text = f.content;
+				text = text.replace("\r\n", "<br/>");
+				$.get("@{CommentCtrl.reply()}", 
+					{"id" : id, "content" : text},
+					function(data){
+					  if(data == "OK")
+						$.prompt("<span class='alertmsg'>发送成功</span>");
+					  else
+					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
+					});
+			}
+		}
+	});
+}
+</script>
