@@ -19,7 +19,7 @@ public class Security extends Secure.Security {
     
     static boolean authenticate(String username, String password) {
         User user = User.find("name", username).first();
-        return user != null && user.password.equals(Codec.hexMD5(password));
+        return user != null && user.info.password.equals(Codec.hexMD5(password));
     }
     
     static boolean check(String name) {

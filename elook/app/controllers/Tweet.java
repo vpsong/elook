@@ -25,60 +25,44 @@ public class Tweet extends Controller {
 	public static final int PERPAGE = 15; 
 	
 	   
-    public static void tweet(String name, int page, Boolean history) {
-    	int curpage = page;
-    	if(curpage == 0)
-    		curpage = 1;
-    	User user = User.find("name", name).first();
+    public static void tweet(String name, int page) {
     	String myname = session.get("username");
+    	if(!myname.equals(name))
+    		showFeeds(name, page);
+    	if(page == 0)
+    		page = 1;    	
     	User me = User.find("name", myname).first();
-    	if(user == null || name.equals(myname)) {
-    		if(user == null)
-    			user = me;
-    		if(Cache.get("outbox" + user.id) == null) {
-    			Cache.add("outbox" + user.id, new ArrayList<FeedIndex>(), "20mn");
-    		}
-    		long maxpage = me.followCount + 1;
-    		render(user, curpage, maxpage, history);
-    	}
-    	else {
-    		Boolean isFollowed = me.isFollowed(user);
-    		long maxpage = (Feed.count("writer = ?", user) - 1) / PERPAGE + 1;
-    		render(user, isFollowed, curpage, maxpage);
-    	}
-    	
+		Cache.add("outbox" + me.id, new ArrayList<FeedIndex>(), "20mn");
+		long maxpage = me.followCount + 1;
+		render(me, page, maxpage);    	
     }
     
-    public static void pull(String name, int page, Boolean history) {
+    public static void pull(int page) {
     	if(page == 0)
     		page = 1;
     	String myname = session.get("username");
-    	User user = User.find("name", name).first();
-    	TreeMap<Calendar, String> map = null;
-    	if(name.equals(myname) && !history) {
-    			map = pull4me(user, page);    		
-    	}
-    	else {
-    		map = new TreeMap<Calendar, String>(); 
-    		List<Feed> list = Feed.find("writer = ? order by datePublish desc", user).fetch(page, PERPAGE);
-    		for(Feed feed : list) {
-    			map.put(feed.datePublish, feed.toString());
-    		}
-    	}
+    	User me = User.find("name", myname).first();
+    	TreeMap<Calendar, String> map = pull4me(me, page);
     	renderJSON(map);
     }
     
-    public static TreeMap<Calendar, String> pull4me(User user, int page) {
-    	TreeMap<Calendar, String> map = new TreeMap<Calendar, String>();
-    	List<User> follows = user.follows;
-    	follows.add(user);
-		for(User follow : follows) {
-			List<Feed> list = Feed.find("writer = ? order by datePublish desc", 
-					follow).fetch(PERPAGE);
-			for(Feed feed : list) {
-				map.put(feed.datePublish, feed.toString());
+    public static TreeMap<Calendar, String> pull4me(User me, int page) {
+    	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("pullmap" + me.id);
+    	if(map == null) {
+	    	map = new TreeMap<Calendar, String>();
+	    	List<User> follows = me.follows;
+	    	follows.add(me);
+			for(User follow : follows) {
+				List<Feed> list = Feed.find("writer = ? order by datePublish desc", 
+						follow).fetch(PERPAGE);
+				for(Feed feed : list) {
+					map.put(feed.datePublish, feed.toString());
+				}
 			}
-		}
+			if(map.size() > 0)
+				Cache.set("pullmap" + me.id, map, "3mn");
+    	}
+    	map = (TreeMap<Calendar, String>)map.clone();
 		TreeMap<Calendar, String> limit = new TreeMap<Calendar, String>();
 		for(int i=1; i<page; ++i) {
 			for(int j=0; j<PERPAGE; ++j) 
@@ -93,30 +77,29 @@ public class Tweet extends Controller {
 		return limit;
     }
     
-    public static void refresh(Long id) {
-    	User user = User.findById(id);
+    public static void refresh() {
     	String myname = session.get("username");
-    	if(!myname.equals(user.name))
-    		renderJSON(0);
-    	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + session.getId());
+    	User me = User.find("name", myname).first();
+    	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + me.id);
     	if(map == null)
-    		map = freshmap(id);
+    		map = freshmap(me);
     	renderJSON(map.size());
     }
     
-    public static void getfresh(Long id) {
-    	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + session.getId());
+    public static void getfresh() {
+    	String myname = session.get("username");
+    	User me = User.find("name", myname).first();
+    	TreeMap<Calendar, String> map = (TreeMap<Calendar, String>)Cache.get("freshmap" + me.id);
     	if(map == null)
-    		map = freshmap(id);
-    	Cache.set("updateTime" + session.getId(), new GregorianCalendar(), "20mn");
-    	Cache.delete("freshmap" + session.getId());
+    		map = freshmap(me);
+    	Cache.set("updateTime" + me.id, new GregorianCalendar(), "20mn");
+    	Cache.delete("freshmap" + me.id);
     	renderJSON(map);
     }
     
-    public static TreeMap<Calendar, String> freshmap(Long id) {
+    public static TreeMap<Calendar, String> freshmap(User me) {
     	TreeMap<Calendar, String> map = new TreeMap<Calendar, String>();
-    	Calendar updateTime = (Calendar)Cache.get("updateTime" + session.getId());
-    	User me = User.findById(id);
+    	Calendar updateTime = (Calendar)Cache.get("updateTime" + me.id);
     	List<User> follows = me.follows;
     	if(follows.size() == 0)
     		return map;
@@ -130,30 +113,46 @@ public class Tweet extends Controller {
     			}    			
     		}
     	}
-    	Cache.set("freshmap" + session.getId(), map, "3mn");
+    	Cache.set("freshmap" + me.id, map, "1mn");
     	return map;
     }
     
     public static void publish(String content) {
+    	String myname = session.get("username");
+    	User me = User.find("name", myname).first();
     	Feed feed = new Feed();
     	feed.content = content;
-    	feed.datePublish = new GregorianCalendar();
-    	String username = session.get("username");
-    	User writer = User.find("name", username).first();
-    	feed.writer = writer;
+    	feed.datePublish = new GregorianCalendar();    	
+    	feed.writer = me;
     	feed.save();
-    	++writer.feedCount;
-    	writer.save();
-    	ArrayList<FeedIndex> tmp = (ArrayList<FeedIndex>)Cache.get("outbox" + writer.id);
+    	++me.feedCount;
+    	me.save();
+    	ArrayList<FeedIndex> tmp = (ArrayList<FeedIndex>)Cache.get("outbox" + me.id);
     	if(tmp == null) {
     		tmp = new ArrayList<FeedIndex>();
-    		Cache.add("outbox" + writer.id, tmp, "20mn");
+    		Cache.add("outbox" + me.id, tmp, "20mn");
     	}
     	FeedIndex index = new FeedIndex();
     	index.publishTime = feed.datePublish;
     	index.feedId = feed.id;
     	tmp.add(index);
     	renderText("OK");
+    }
+    
+    public static void showFeeds(String name, int page) {
+    	User user = User.find("name", name).first();
+    	if(user == null)
+    		tweet(session.get("username"), 1);
+    	if(page == 0)
+    		page = 1;
+    	String myname = session.get("username");
+    	User me = User.find("name", myname).first();
+    	List<Feed> feeds = Feed.find("writer = ? order by datePublish desc", user).fetch(page, PERPAGE);
+    	int maxpage = (user.feedCount - 1) / PERPAGE + 1;
+    	boolean isFollowed = false;
+    	if(me.follows.contains(user))
+    		isFollowed = true;
+    	render(user, feeds, page, isFollowed, maxpage);
     }
     
 }

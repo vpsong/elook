@@ -24,12 +24,13 @@ public class ChatCtrl extends Controller {
 		chat.from = me;
 		chat.to = other;
 		chat.dateChat = new GregorianCalendar();
-		//content = content.replaceAll("\r\n", "song");
 		chat.content = content;
 		if(parentId != null) {
 			chat.parent = Chat.findById(parentId);
 		}
 		chat.save();
+		++other.chatCount;
+		other.save();
 		FreshchatIndex freshchat = new FreshchatIndex();
 		freshchat.chat = chat;
 		freshchat.toUser = other;
@@ -44,7 +45,9 @@ public class ChatCtrl extends Controller {
 		renderJSON(chats.size());
 	}
 	
-	public static void chatList() {
+	public static void chatList(int page) {
+		if(page == 0)
+			page = 1;
 		String myname = session.get("username");
 		User me = User.find("name", myname).first();
 		List<FreshchatIndex> freshs = FreshchatIndex.find("toUser", me).fetch();
@@ -53,12 +56,13 @@ public class ChatCtrl extends Controller {
 			chats = Chat.find("to", me).fetch(freshs.size());
 		}
 		else {
-			chats = Chat.find("to = ? order by dateChat desc", me).fetch(PERPAGE);
+			chats = Chat.find("to = ? order by dateChat desc", me).fetch(page, PERPAGE);
 		}
 		for(FreshchatIndex index : freshs) {
 			index.delete();
 		}
-		render(chats);
+		int maxpage = (me.chatCount - 1) / PERPAGE + 1;
+		render(chats, page, maxpage);
 	}
 	
 	public static void reply(Long id, String content) {
@@ -70,6 +74,8 @@ public class ChatCtrl extends Controller {
 		reply.dateChat = new GregorianCalendar();
 		reply.content = content;
 		reply.save();
+		++chat.from.chatCount;
+		chat.from.save();
 		FreshchatIndex freshchat = new FreshchatIndex();
 		freshchat.chat = reply;
 		freshchat.toUser = reply.to;

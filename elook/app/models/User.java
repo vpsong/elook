@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumns;
@@ -14,12 +15,16 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Parameter;
 
+import play.db.jpa.Blob;
 import play.db.jpa.GenericModel;
 import play.db.jpa.Model;
 
@@ -33,22 +38,25 @@ uniqueConstraints={@UniqueConstraint(columnNames={"name"})}
 )
 public class User extends Model {
 	
+	@Index(name="IDX_NAME")
 	public String name;
-	public String password;
-	public int sex;
-	public String mail;
-	public String remark;
-	public Calendar dateRegist;
+	public Blob photo;
 	public int feedCount;
 	public int followerCount;
 	public int followCount;
-	@ManyToMany
+	public int commentCount;
+	public int chatCount;
+	@Transient
+	public Feed lastFeed;
+	@OneToOne(mappedBy="user", fetch=FetchType.LAZY)
+	public UserInfo info;
+	@ManyToMany(fetch=FetchType.LAZY)
 	@JoinTable(name="user_contact",
 		joinColumns =@JoinColumn(name="user_id"),
 		inverseJoinColumns=@JoinColumn(name="follower_id")
 	) 
 	public List<User> followers;
-	@ManyToMany(mappedBy="followers")
+	@ManyToMany(mappedBy="followers", fetch=FetchType.LAZY)
 	public List<User> follows;
 	
 	public static int SEX_MALE = 1;

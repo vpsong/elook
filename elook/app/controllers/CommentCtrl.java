@@ -32,6 +32,8 @@ public class CommentCtrl extends Controller {
 		comment.save();
 		++feed.commentCount;
 		feed.save();
+		++feed.writer.commentCount;
+		feed.writer.save();
 		FreshcommentIndex freshcomment = new FreshcommentIndex();
 		freshcomment.toUser = feed.writer;
 		freshcomment.comment = comment;
@@ -46,7 +48,9 @@ public class CommentCtrl extends Controller {
 		renderJSON(comments.size());
 	}
 	
-	public static void commentList() {
+	public static void commentList(int page) {
+		if(page == 0)
+			page = 1;
 		String myname = session.get("username");
 		User me = User.find("name", myname).first();
 		List<FreshcommentIndex> freshs = FreshcommentIndex.find("toUser", me).fetch();
@@ -55,12 +59,13 @@ public class CommentCtrl extends Controller {
 			comments = Comment.find("to", me).fetch(freshs.size());
 		}
 		else {
-			comments = Comment.find("to = ? order by dateComment desc", me).fetch(PERPAGE);
+			comments = Comment.find("to = ? order by dateComment desc", me).fetch(page, PERPAGE);
 		}
 		for(FreshcommentIndex index : freshs) {
 			index.delete();
 		}
-		render(comments);
+		int maxpage = (me.commentCount - 1) / PERPAGE + 1;
+		render(comments, page, maxpage);
 	}
 	
 	public static void reply(Long id, String content) {
@@ -81,6 +86,8 @@ public class CommentCtrl extends Controller {
 		}
 		++comment.parentFeed.commentCount;
 		comment.parentFeed.save();
+		++comment.from.commentCount;
+		comment.from.save();
 		renderText("OK");
 	}
 	 
