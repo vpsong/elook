@@ -1,12 +1,42 @@
 #{extends 'main.html' /}
 #{set title:'我的粉丝 eLook-e博' /}
 
-<a href="/${session.username}">我的首页</a>
+<div id="summary">
+#{a @Tweet.showFeeds(session.username)}${session.username}#{/a} 
+<a href="/${session.username}">我的首页</a> #{a @Secure.logout()}退出#{/a}
+</div>
 
 <div id="container">
 #{list items:followers, as:'follower'}
-<div class="follower">
-<a href="/${follower.name}">${follower.name}</a>
+<div class="tweet">
+<img class="photo" src="/photo/${follower.photo.exists()?follower.photo.getUUID():'default'}" />
+#{a @Tweet.showFeeds(follower.name)}${follower.name}#{/a}：
+#{if follower.lastFeed != null}
+<span>${follower.lastFeed.content.raw()}</span>
+	<p class="info">
+	<span class="pubtime">${follower.lastFeed.showDate()}</span>
+	<span class="action">
+	<a>转发(${follower.lastFeed.forwardCount})</a>
+	<a href="javascript:void(0)" onclick="comment(${follower.lastFeed.id})">评论(${follower.lastFeed.commentCount})</a>
+	</span>
+	</p>
+#{/if}
+#{else}
+<span>该用户还没有发表微博..</span>
+#{/else}
 </div>
 #{/list}
 </div>
+
+<p id="pager">
+#{if page > 1 }
+    #{a @CUser.showFollowers(page - 1) }上一页#{/a}
+#{/if}
+
+第${page}页
+
+#{if page < maxpage }
+    #{a @CUser.showFollowers(page + 1) }下一页#{/a}
+#{/if}
+</p>
+

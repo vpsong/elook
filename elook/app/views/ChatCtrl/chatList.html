@@ -1,12 +1,16 @@
 #{extends 'main.html' /}
 #{set title:'我的私信 eLook-e博' /}
 
-<a href="/${session.username}">我的首页</a>
+<div id="summary">
+#{a @Tweet.showFeeds(session.username)}${session.username}#{/a} 
+<a href="/${session.username}">我的首页</a> #{a @Secure.logout()}退出#{/a}
+</div>
 
 <div id="container">
 #{list items:chats, as:'chat'}
-<div class="chat">
-	${chat.from.name}：
+<div class="tweet">
+	<img class="photo" src="/photo/${chat.from.photo.exists()?chat.from.photo.getUUID():'default'}" />
+	#{a @Tweet.showFeeds(chat.from.name)}${chat.from.name}#{/a}：
 	<span>${chat.content.raw()}</span>
 	#{if chat.parent != null}
 		<p class="origin">回复你的私信：${chat.parent.content.raw()}</p>
@@ -21,30 +25,16 @@
 #{/list}
 </div>
 
-<script type="text/javascript">
-function reply(id, name) {
-	var txt = '<div align="center">回复 ' + name + '</div>'
-		+
-		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual"></textarea></div>';
-	$.prompt(txt, {
-		buttons : {
-			发送 : true,
-			取消 : false
-		},
-		submit : function(v, m, f) {
-			if(v) {
-				var text = f.content;
-				text = text.replace("\r\n", "<br/>");
-				$.get("@{ChatCtrl.reply()}", 
-					{"id" : id, "content" : text},
-					function(data){
-					  if(data == "OK")
-						$.prompt("<span class='alertmsg'>发送成功</span>");
-					  else
-					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
-					});
-			}
-		}
-	});
-}
-</script>
+<p id="pager">
+#{if page > 1 }
+    #{a @chatList(page - 1) }上一页#{/a}
+#{/if}
+
+第${page}页
+
+#{if page < maxpage }
+    #{a @chatList(page + 1) }下一页#{/a}
+#{/if}
+</p>
+
+

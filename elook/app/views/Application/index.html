@@ -2,7 +2,7 @@
 #{set title:'eLook首页' /}
 
 
-<h1>eLook垃圾版</h1>
+<h1>eLook 0.1版</h1>
 #{a @Cuser.userInfo()}注册#{/a}
 
 <div id="container_index">
@@ -10,23 +10,6 @@
 
 
 <script type="text/javascript">
-function pull() {
-	$.getJSON("/application/show",
-			function(data) {
-			$("#container_index").html("");
-			$.each(data,function(idx,item){
-				var newtweet = "<div class='tweet_index'><a href='/" + eval('(' + item + ')').writer + 
-			        "' target='_blank'>" + eval('(' + item + ')').writer + "</a>：" +
-			        eval('(' + item + ')').content +  
-			        "<p class='info'><span class='pubtime'>" + eval('(' + item + ')').time + 
-			        "</span><span class='action'>" + 
-			        "<a>转发(" + eval('(' + item + ')').forwardCount + ")</a> | <a>评论(" + 
-			        eval('(' + item + ')').commentCount + ")</a></span></p></div>";
-			    	$("#container_index").prepend(newtweet);
-			});   
-	   });
-}
-
 $(function(){
 	pull();
 	setInterval(pull, 180000);
@@ -38,7 +21,7 @@ $(function(){
 	scrtime = setInterval(function(){
 		var $con = $("#container_index");
 		var tweetHeight = $con.find("div:last").height();
-		$con.animate({marginTop : tweetHeight + 20 +"px"},1000,function(){		
+		$con.animate({marginTop : tweetHeight + 25 +"px"},1000,function(){		
 		$con.find("div:last").prependTo($con)
 		$con.find("div:first").hide();
 		$con.css({marginTop:0});
