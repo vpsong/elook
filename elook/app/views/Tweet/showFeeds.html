@@ -1,0 +1,56 @@
+#{extends 'main.html' /}
+#{set 'title'}
+    ${user.name}的微博
+#{/set}
+
+<div id="summary">
+#{a @Tweet.showFeeds(session.username)}${session.username}#{/a} <a href="/${session.username}">我的首页</a> #{a @Secure.logout()}退出#{/a}
+<br/><img class="photo" src="/photo/${user.photo.exists()?user.photo.getUUID():'default'}" />
+#{a @Tweet.showFeeds(user.name)}${user.name}#{/a} ${user.followCount}关注 ${user.followerCount}粉丝 ${user.feedCount}微博 
+
+#{if session.username != user.name}
+#{if isFollowed}
+已关注
+#{/if}
+#{else}
+<span id="isFollowed"><a href="javascript:void(0)" onclick="follow('${user.name}')">关注</a></span>
+#{/else}
+<a href="javascript:void(0)" onclick="chat(${user.id})">私信</a>
+#{/if}
+</div>
+
+<div id="container">
+#{list items:feeds, as:'feed'}
+<div class="tweet">
+	<img class="photo" src="/photo/${feed.writer.photo.exists()?feed.writer.photo.getUUID():'default'}" />
+	#{a @showFeeds(feed.writer.name)}${feed.writer.name}#{/a}：
+	<span>${feed.content.raw()}</span>
+	<p class="info">
+	<span class="pubtime">${feed.showDate()}</span>
+	<span class="action">
+	<a>转发(${feed.forwardCount})</a>|
+	<a href="javascript:void(0)" onclick="comment(${feed.id})">评论(${feed.commentCount})</a>
+	</span>
+	</p>
+</div>
+#{/list}
+</div>
+
+<p id="pager">
+#{if page > 1 }
+    #{a @showFeeds(user.name, page - 1) }上一页#{/a}
+#{/if}
+
+第${page}页
+
+#{if page < maxpage }
+    #{a @showFeeds(user.name, page + 1) }下一页#{/a}
+#{/if}
+</p>
+
+
+<script type="text/javascript">
+function chat(id) {
+	chatto(id, "${user.name}", ${user.id});
+}
+</script>
