@@ -33,7 +33,20 @@ public class Tweet extends Controller {
     		page = 1;    	
     	User me = User.find("name", myname).first();
 		Cache.add("outbox" + me.id, new ArrayList<FeedIndex>(), "20mn");
-		long maxpage = me.followCount + 1;
+		//long maxpage = me.followCount + 1;
+		TreeMap<Calendar, String> map = new TreeMap<Calendar, String>();
+    	List<User> follows = me.follows;
+    	follows.add(me);
+		for(User follow : follows) {
+			List<Feed> list = Feed.find("writer = ? order by datePublish desc", 
+					follow).fetch(PERPAGE);
+			for(Feed feed : list) {
+				map.put(feed.datePublish, feed.toString());
+			}
+		}
+		if(map.size() > 0)
+			Cache.set("pullmap" + me.id, map, "3mn");
+		long maxpage = (map.size() - 1) / PERPAGE + 1;
 		render(me, page, maxpage);    	
     }
     
