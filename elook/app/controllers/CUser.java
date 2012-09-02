@@ -71,4 +71,20 @@ public class CUser extends Controller {
 		render(followers, page, maxpage);
 	}
 	
+	public static void showFollows(int page) {
+		if(page == 0)
+			page = 1;
+		String myname = session.get("username");
+		User me = User.find("name", myname).first();
+		List<UserContact> contacts = UserContact.find("follower", me).fetch(page, PERPAGE);
+		long maxpage = (me.followCount - 1) / PERPAGE + 1;
+		List<User> follows = new ArrayList<User>();
+		for(UserContact contact : contacts) {
+			User u = contact.user;
+			u.lastFeed = Feed.find("writer = ? order by datePublish desc", u).first();
+			follows.add(u);
+		}
+		render(follows, page, maxpage);
+	}
+	
 }
