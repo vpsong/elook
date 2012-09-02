@@ -6,6 +6,7 @@
 ${me.followCount}关注 ${me.followerCount}粉丝 ${me.feedCount}微博 #{a @Secure.logout()}退出#{/a}
 
 
+#{a @CUser.showFollows()}我的关注#{/a}|
 #{a @CUser.showFollowers()}我的粉丝#{/a}|
 #{a @showFeeds(me.name)}我的微博#{/a}|
 #{a @CommentCtrl.commentList()}我的评论#{/a}|
@@ -14,15 +15,19 @@ ${me.followCount}关注 ${me.followerCount}粉丝 ${me.feedCount}微博 #{a @Sec
 
 <div>
 <textarea id="content" rows="5" cols="50" maxlength="127"  wrap="virtual">${content}</textarea>
-<input type="button" value="发表" onclick="publishing();"/>
+<input type="button" value="发表" onclick="publish('${me.name}', '${me.photo.exists()?me.photo.getUUID():'default'}')"/>
 </div>
 </div>
 
 <div id="tip">
 </div>
-<div id="tipChat">
-</div>
-<div id="tipComment">
+<div class="tipBox">
+	<div id="tipChat">
+	</div>
+	<div id="tipComment">
+	</div>
+	<div id="tipAt">
+	</div>
 </div>
 
 <div id="container">
@@ -42,17 +47,14 @@ ${me.followCount}关注 ${me.followerCount}粉丝 ${me.feedCount}微博 #{a @Sec
 
 
 <script type="text/javascript">
-function publishing() {
-	publish("${me.name}", "${me.photo.exists()?me.photo.getUUID():'default'}");
-}
-
 $(function() {
 	init(${curpage});
 	freshchat();
 	freshcomment();
-	
+	freshat();
 	setInterval(refresh, 120000);
 	setInterval(freshchat, 40000);
 	setInterval(freshcomment, 40000);
+	setInterval(freshat, 40000);
 });
 </script>

@@ -1,0 +1,39 @@
+#{extends 'main.html' /}
+#{set title:'@到我的 eLook-e博' /}
+
+<div id="summary">
+#{a @Tweet.showFeeds(session.username)}${session.username}#{/a} 
+<a href="/${session.username}">我的首页</a> #{a @Secure.logout()}退出#{/a}
+</div>
+
+<div id="container">
+#{list items:feeds, as:'feed'}
+<div class="tweet">
+	<img class="photo" src="/photo/${feed.writer.photo.exists()?feed.writer.photo.getUUID():'default'}" />
+	#{a @Tweet.showFeeds(feed.writer.name)}${feed.writer.name}#{/a}：
+	<span>${feed.content.raw()}</span>
+
+	<p class="info">
+	<span class="pubtime">${feed.showDate()}</span>
+	<span class="action">
+	<a id="fcount${feed.id}" href="javascript:void(0)" onclick="repost(${feed.id})">转发(${feed.forwardCount})</a>|
+	<a id="ccount${feed.id}" href="javascript:void(0)" onclick="comment(${feed.id})">评论(${feed.commentCount})</a>
+	</span>
+	</p>
+</div>
+#{/list}
+</div>
+
+<p id="pager">
+#{if page > 1 }
+    #{a @atList(page - 1) }上一页#{/a}
+#{/if}
+
+第${page}页
+
+#{if page < maxpage }
+    #{a @atList(page + 1) }下一页#{/a}
+#{/if}
+</p>
+
+

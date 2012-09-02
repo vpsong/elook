@@ -15,21 +15,21 @@
 #{else}
 <span id="isFollowed"><a href="javascript:void(0)" onclick="follow('${user.name}')">关注</a></span>
 #{/else}
-<a href="javascript:void(0)" onclick="chat(${user.id})">私信</a>
+<a href="javascript:void(0)" onclick="chatto('${user.name}', ${user.id})">私信</a>
 #{/if}
 </div>
 
 <div id="container">
 #{list items:feeds, as:'feed'}
-<div class="tweet">
+<div class="tweet" id="tweet${feed.id}">
 	<img class="photo" src="/photo/${feed.writer.photo.exists()?feed.writer.photo.getUUID():'default'}" />
 	#{a @showFeeds(feed.writer.name)}${feed.writer.name}#{/a}：
 	<span>${feed.content.raw()}</span>
 	<p class="info">
 	<span class="pubtime">${feed.showDate()}</span>
 	<span class="action">
-	<a>转发(${feed.forwardCount})</a>|
-	<a href="javascript:void(0)" onclick="comment(${feed.id})">评论(${feed.commentCount})</a>
+	<a id="fcount${feed.id}" href="javascript:void(0)" onclick="repost(${feed.id})">转发(${feed.forwardCount})</a>|
+	<a id="ccount${feed.id}" href="javascript:void(0)" onclick="comment(${feed.id})">评论(${feed.commentCount})</a>
 	</span>
 	</p>
 </div>
@@ -48,9 +48,3 @@
 #{/if}
 </p>
 
-
-<script type="text/javascript">
-function chat(id) {
-	chatto(id, "${user.name}", ${user.id});
-}
-</script>

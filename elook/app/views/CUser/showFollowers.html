@@ -16,8 +16,8 @@
 	<p class="info">
 	<span class="pubtime">${follower.lastFeed.showDate()}</span>
 	<span class="action">
-	<a>转发(${follower.lastFeed.forwardCount})</a>
-	<a href="javascript:void(0)" onclick="comment(${follower.lastFeed.id})">评论(${follower.lastFeed.commentCount})</a>
+	<a id="fcount${follower.lastFeed.id}">转发(${follower.lastFeed.forwardCount})</a>
+	<a id="ccount${follower.lastFeed.id}" href="javascript:void(0)" onclick="comment(${follower.lastFeed.id})">评论(${follower.lastFeed.commentCount})</a>
 	</span>
 	</p>
 #{/if}
