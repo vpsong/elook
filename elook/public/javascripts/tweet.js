@@ -16,13 +16,15 @@ function getfresh(id) {
 	$.getJSON("/tweet/getfresh",
 			{"id" : id},
 			function(data) {
-			$.each(data,function(idx,item){
-				var obj = eval('(' + item + ')');
-			        var newtweet = "<div class='tweet'><img class='photo' src='/photo/" + 
+				$.each(data,function(idx,item){
+					//var obj = eval('(' + item + ')');
+					var obj = JSON.parse(item);    
+					var newtweet = "<div class='tweet'><img class='photo' src='/photo/" + 
 					obj.photo + "' /><a href='/tweet/showFeeds?name=" + obj.writer + 
 			        "' target='_blank'>" + obj.writer + "</a>：" + obj.content +
 			        "<p class='info'><span class='pubtime'>" + obj.time + "</span><span class='action'>" + 
-			        "<a>转发(" + obj.forwardCount + ")</a> | <a href='javascript:void(0)' onclick='comment(" + obj.id + ")'>评论(" + 
+			        "<a id='fcount" + obj.id + "'>转发(" + obj.forwardCount + 
+			        ")</a> | <a id='ccount" + obj.id + "' href='javascript:void(0)' onclick='comment(" + obj.id + ")'>评论(" + 
 			        obj.commentCount + ")</a></span></p></div>";
 			    	$("#container").prepend(newtweet);
 			    });   
@@ -32,21 +34,29 @@ function getfresh(id) {
 
 function freshchat() {
 	$.get("/chatctrl/getfresh", function(data){
-		  if(data == "0")
+		  if(data == "0") {
 			  $("#tipChat").html("");
-		  else
+			  $(".tipBox").hide();
+		  }
+		  else {
 		  	$("#tipChat").html("<a href='/chatctrl/chatlist'>有" + 
 				  data + "条新私信</a>");
+		  	$(".tipBox").show();
+		  }
 		});
 }
 
 function freshcomment() {
 	$.get("/commentctrl/getfresh", function(data){
-		  if(data == "0")
+		  if(data == "0") {
 			  $("#tipComment").html("");
-		  else
+			  $(".tipBox").hide();
+		  }
+		  else {
 		  	$("#tipComment").html("<a href='/commentctrl/commentlist'>有" + 
 				  data + "条新评论</a>");
+		  	$(".tipBox").show();
+	  	  }
 		});
 }
 
@@ -70,8 +80,12 @@ function comment(id) {
 				$.get("/commentctrl/comment", 
 					{"id" : id, "content" : text},
 					function(data){
-					  if(data == "OK")
+					  if(data == "OK") {
 						$.prompt("<span class='alertmsg'>评论成功</span>");
+						var count = $("#ccount" + id).html();
+						count = parseInt(count.substring(3, count.length - 1)) + 1;
+						$("#ccount" + id).html("评论(" + count + ")");
+					  }
 					  else
 					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
 					});
@@ -84,14 +98,16 @@ function init(curpage) {
 	$.getJSON("/tweet/pull",
 			{"page" : curpage },
 			function(data) {
-			$.each(data,function(idx,item){
-				var obj = eval('(' + item + ')');
-			        var newtweet = "<div class='tweet'><img class='photo' src='/photo/" + 
+				$.each(data,function(idx,item){
+					//var obj = eval('(' + item + ')');
+					var obj = JSON.parse(item);
+			        var newtweet = "<div class='tweet' id='tweet" + obj.id + "'><img class='photo' src='/photo/" + 
 					obj.photo + "' /><a href='/tweet/showFeeds?name=" + obj.writer + 
 			        "' target='_blank'>" + obj.writer + "</a>：" +
-			        obj.content +
+			        "<span>" + obj.content + "</span>" +
 			        "<p class='info'><span class='pubtime'>" + obj.time + "</span><span class='action'>" + 
-			        "<a>转发(" + obj.forwardCount + ")</a> | <a href='javascript:void(0)' onclick='comment(" + obj.id + 
+			        "<a id='fcount" + obj.id + "' href='javascript:void(0)' onclick='repost(" + obj.id +")'>转发(" + obj.forwardCount + 
+			        ")</a> | <a id='ccount" + obj.id + "' href='javascript:void(0)' onclick='comment(" + obj.id + 
 			        ")'>评论(" + obj.commentCount + ")</a></span></p></div>";
 			    	$("#container").prepend(newtweet);
 			    });   
@@ -141,7 +157,7 @@ function follow(name) {
 		});
 }
 
-function chatto(id, name, userId) {
+function chatto(name, userId) {
 	var txt = '<div align="center">悄悄对 ' + name + ' 说</div>'
 		+
 		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual"></textarea></div>';
@@ -206,17 +222,65 @@ function pull() {
 			function(data) {
 			$("#container_index").html("");
 			$.each(data,function(idx,item){
-				var obj = eval('(' + item + ')');
+				//var obj = eval('(' + item + ')');
+				var obj = JSON.parse(item);
 				var newtweet = "<div class='tweet'><img class='photo' src='/photo/" + 
 				obj.photo + "' /><a href='/" + obj.writer + "' target='_blank'>" + obj.writer + "</a>：" +
 			        obj.content +  "<p class='info'><span class='pubtime'>" + obj.time + 
-			        "</span><span class='action'>" + "<a>转发(" + obj.forwardCount + ")</a> | <a>评论(" + 
-			        obj.commentCount + ")</a></span></p></div>";
+			        "</span><span class='action'>" + "<a>转发(" + obj.forwardCount + 
+			        ")</a> | <a>评论(" + obj.commentCount + ")</a></span></p></div>";
 			    	$("#container_index").prepend(newtweet);
 			});   
 	   });
 }
 
+function repost(id) {
+	var pn = $("#tweet" + id + " a:first").html();
+	var pc = $("#tweet" + id + " span:first").html();
+	var txt = '<div align="center">转发</div>'
+		+
+		'<div><textarea name="content" rows="5" cols="50" maxlength="127" wrap="virtual">//@' + pn + "：" + pc + '</textarea></div>';
+	$.prompt(txt, {
+		buttons : {
+			发送 : true,
+			取消 : false
+		},
+		submit : function(v, m, f) {
+			if(v) {
+				var text = f.content;
+				if(text == "") {
+					$.prompt("<span class='alertmsg'>转发内容不能为空..</span>");
+					return false;
+				}
+				text = text.replaceAll("\r\n", "<br/>");
+				$.get("/repostctrl/repost", 
+					{"id" : id, "content" : text},
+					function(data){
+					  if(data == "OK") {
+						$.prompt("<span class='alertmsg'>转发成功</span>");
+						var count = $("#fcount" + id).html();
+						count = parseInt(count.substring(3, count.length - 1)) + 1;
+						$("#fcount" + id).html("转发(" + count + ")");
+					  }
+					  else
+					  	$.prompt("<span class='alertmsg'>系统繁忙，请稍候再试</span>");
+					});
+			}
+		}
+	});
+}
 
-
+function freshat() {
+	$.get("/repostctrl/getfresh", function(data){
+		  if(data == "0") {
+			  $("#tipAt").html("");
+			  $(".tipBox").hide();
+		  }
+		  else {
+		  	$("#tipAt").html("<a href='/repostctrl/atlist'>有" + 
+				  data + "条@到你</a>");
+		  	$(".tipBox").show();
+		  }
+		});
+}
 

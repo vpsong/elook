@@ -54,3 +54,11 @@ textarea {
 #summary {
 	min-height: 100px;
 }
+.tipBox {
+	position: absolute;
+	top: 10px;
+	border: 1px solid blue;
+	right:150px;
+	width: 150px;
+	text-align: center;
+}
