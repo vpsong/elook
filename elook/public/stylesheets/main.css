@@ -62,3 +62,38 @@ textarea {
 	width: 150px;
 	text-align: center;
 }
+.container_wall {
+  width : 1210px;
+  margin : 0 auto;
+  overflow-y : auto; 
+}
+.col {
+  float : left;
+  width : 220px;
+  margin : 0 10px;
+}
+.col div{
+  word-wrap: break-word; 
+　word-break: normal; 
+  margin : 20px auto;
+  background-color : white;
+  border: 2px solid black;
+  padding: 5px 10px;
+  overflow-y: auto;
+}
+.photo_wall {
+	max-height:120px;
+	max-width: 120px;
+	display: block;
+	margin: 5px auto;
+}
+.info_wall {
+	font-size:85%;
+	color:#5599FF;
+	margin-top:30px;
+}
+.loading {
+	margin: 10px auto;
+	width: 300px;
+	color: blue;
+}

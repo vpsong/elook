@@ -8,6 +8,8 @@
 
 # Home page
 GET     /                                       Application.index
+# Wall page
+GET     /wall                                   Application.wall
 
 # Ignore favicon requests
 GET     /favicon.ico                            404

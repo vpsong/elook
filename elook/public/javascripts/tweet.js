@@ -284,3 +284,36 @@ function freshat() {
 		});
 }
 
+function wallShow(page) {
+	$.getJSON("/application/wallShow", {"page": page},
+			function(data) {
+			$.each(data,function(idx,item){
+				var obj = JSON.parse(item);
+				var newtweet = "<div class='tweet'><img class='photo_wall' src='/photo/" + 
+				obj.photo + "' /><a href='/" + obj.writer + "' target='_blank'>" + obj.writer + "</a>：" +
+			        obj.content +  "<p class='info_wall'><span class='pubtime'>" + obj.time + 
+			        "</span><span class='action'>" + "<a>转发(" + obj.forwardCount + 
+			        ")</a> | <a>评论(" + obj.commentCount + ")</a></span></p></div>";
+			    var cols = $(".col");
+			    var i = 1;
+			    var min = 0;
+			    for(; i<cols.length; ++i) {
+			    	if(cols[min].clientHeight > cols[i].clientHeight) {
+			    		min = i; 
+			    	}
+			    }
+			    $(cols[min]).append(newtweet);
+			});   
+	   });
+}
+
+function bottomRefresh() {
+    var a = document.documentElement.clientHeight == 0 ? document.body.clientHeight : document.documentElement.clientHeight;
+    var b = document.documentElement.scrollTop == 0 ? document.body.scrollTop : document.documentElement.scrollTop;
+    var c = document.documentElement.scrollHeight == 0 ? document.body.scrollHeight : document.documentElement.scrollHeight;
+    if (b != 0) {
+        if (a + b >= c) {
+        	wallShow(page++);
+        }
+    }
+}

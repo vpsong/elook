@@ -1,0 +1,29 @@
+#{extends 'main.html' /}
+#{set title:'e博墙' /}
+
+<div class="container_wall">
+  <div class="col">
+  </div>
+  <div class="col"> 
+  </div>
+  <div class="col">
+  </div>
+  <div class="col">
+  </div>
+  <div class="col">
+  </div>
+</div>
+<div class="loading"><img src="@{'/public/images/loading.gif'}">加载中...</div>
+<script type="text/javascript">
+page = 1;
+window.onscroll = bottomRefresh;
+$(function() {
+	wallShow(page);
+});
+</script>
+
+<style type="text/css">
+body {
+	background-color: gray;
+}
+</style>
